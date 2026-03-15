@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水晶能量测评</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0616;
+            --accent-glow: rgba(138, 104, 255, 0.4);
+            --text-light: #f4f0ff;
+            --text-muted: #b8a6d9;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(45, 20, 85, 0.4), transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(20, 60, 85, 0.3), transparent 50%);
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px #fff; }
+        }
+
+        h1, h2, h3, .serif-font {
+            font-family: 'Cinzel', serif;
+        }
+        
+        .reading-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.25rem;
+            line-height: 1.8;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 
+                        0 0 40px rgba(138, 104, 255, 0.1);
+        }
+
+        .btn-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .btn-option:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px var(--accent-glow);
+        }
+
+        .btn-option.selected {
+            background: rgba(138, 104, 255, 0.3);
+            border-color: rgba(168, 133, 255, 0.8);
+            box-shadow: 0 0 20px rgba(138, 104, 255, 0.5);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(138, 104, 255, 0.8), rgba(90, 60, 180, 0.8));
+            box-shadow: 0 0 20px rgba(138, 104, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(138, 104, 255, 0.7);
+            transform: scale(1.02);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 0 20px rgba(138, 104, 255, 0.2);
+        }
+
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .fade-enter { opacity: 0; transform: translateY(20px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 0.8s ease, transform 0.8s ease; }
+        .fade-exit { opacity: 1; transform: translateY(0); }
+        .fade-exit-active { opacity: 0; transform: translateY(-20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+
+        .hidden-section { display: none; }
+
+        .crystal-loader {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .crystal-loader::before, .crystal-loader::after {
+            content: '';
+            position: absolute;
+            width: 0; height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+        }
+        .crystal-loader::before {
+            border-bottom: 40px solid rgba(180, 150, 255, 0.8);
+            top: -10px;
+            filter: drop-shadow(0 0 15px rgba(180, 150, 255, 0.6));
+        }
+        .crystal-loader::after {
+            border-top: 20px solid rgba(130, 90, 220, 0.6);
+            top: 30px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+            background: linear-gradient(90deg, #6b4c9a, #a485ff);
+            box-shadow: 0 0 10px #a485ff;
+        }
+
+        .radar-chart {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .radar-chart svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .radar-grid {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 1;
+        }
+
+        .radar-axis {
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 1;
+        }
+
+        .radar-area {
+            fill: rgba(138, 104, 255, 0.25);
+            stroke: rgba(168, 133, 255, 0.8);
+            stroke-width: 2;
+            transition: all 0.8s ease;
+        }
+
+        .radar-point {
+            fill: #a485ff;
+            stroke: #fff;
+            stroke-width: 2;
+            transition: all 0.8s ease;
+        }
+
+        .radar-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            fill: var(--text-muted);
+            text-anchor: middle;
+        }
+
+        .dimension-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .dimension-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .dimension-score {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: #a485ff;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-btn-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .scientific-basis {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .scientific-basis .quote {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .scientific-basis .divider {
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #a485ff, transparent);
+            margin: 1.5rem auto;
+        }
+
+        .scientific-basis .inspired-by {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .scientific-basis .description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-light);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white relative">
+
+    <div class="stars" id="star-container"></div>
+
+    <main class="flex-grow flex items-center justify-center p-4 relative z-10 w-full max-w-5xl mx-auto min-h-screen">
+        
+        <section id="welcome-screen" class="text-center w-full transition-all duration-800">
+            <div class="glass-card rounded-3xl p-10 md:p-16 w-full shadow-2xl">
+                <p class="text-sm uppercase tracking-[0.3em] text-[var(--text-muted)] mb-4">发现你的专属水晶</p>
+                <h1 class="text-4xl md:text-6xl font-semibold mb-6 tracking-wide drop-shadow-lg">水晶能量测评</h1>
+                
+                <div class="scientific-basis">
+                    <div class="quote">
+                        "万物皆有振动，水晶以其独特的分子结构，成为能量的导体。"
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="inspired-by">
+                        参考Doreen Virtue等学者的研究成果
+                    </div>
+                    
+                    <div class="description">
+                        本测评结合矿物学知识和传统智慧，帮助你探索与自身能量相契合的水晶。
+                    </div>
+                </div>
+                
+                <p class="reading-text text-gray-300 max-w-2xl mx-auto mb-10">
+                    每个人的能量特质都是独特的。通过这十五道精心设计的问题，探索与你内在频率相契合的水晶，并获得专属的珠宝搭配建议。 
+                </p>
+                <button onclick="startQuiz()" class="btn-primary text-white font-medium uppercase tracking-widest text-sm py-4 px-10 rounded-full">
+                    开始测评
+                </button>
+            </div>
+        </section>
+
+        <section id="quiz-screen" class="hidden-section w-full max-w-3xl mx-auto">
+            <div class="glass-card rounded-3xl p-8 md:p-12 w-full">
+                <div class="mb-8">
+                    <div class="flex justify-between text-xs text-[var(--text-muted)] tracking-widest mb-2 uppercase">
+                        <span>个性探索</span>
+                        <span id="progress-text">1 / 15</span>
+                    </div>
+                    <div class="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full progress-bar-fill w-0"></div>
+                    </div>
+                </div>
+
+                <div id="question-container" class="min-h-[300px] flex flex-col justify-center">
+                    <h2 id="question-text" class="text-2xl md:text-3xl font-medium mb-8 text-center leading-relaxed">问题将显示在这里</h2>
+                    <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <div class="nav-btn-group">
+                        <button id="prev-btn" onclick="prevQuestion()" class="btn-nav text-white font-medium text-sm py-3 px-6 rounded-full flex items-center gap-2" disabled>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            上一题
+                        </button>
+                    </div>
+                    <div class="nav-btn-group">
+                        <button id="next-btn" onclick="nextQuestion()" class="btn-primary text-white font-medium text-sm py-3 px-6 rounded-full flex items-center gap-2" disabled>
+                            下一题
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="loading-screen" class="hidden-section text-center w-full">
+            <div class="glass-card rounded-3xl p-16 w-full max-w-2xl mx-auto">
+                <div class="crystal-loader mb-10"></div>
+                <h2 class="text-2xl tracking-widest mb-4">正在分析你的答案...</h2>
+                <p class="text-[var(--text-muted)] italic reading-text" id="loading-text">正在计算你的能量倾向...</p>
+            </div>
+        </section>
+
+        <section id="result-screen" class="hidden-section w-full pb-10 pt-10">
+            <div class="glass-card rounded-3xl p-8 md:p-14 w-full shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
+
+                <div class="relative z-10">
+                    <div class="text-center mb-8">
+                        <p class="text-sm uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">你的能量匹配结果</p>
+                        <h1 id="result-crystal-name" class="text-4xl md:text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-white drop-shadow-sm">水晶名称</h1>
+                        <p id="result-keywords" class="italic text-[var(--text-muted)] tracking-widest uppercase text-sm">关键词 • 关键词 • 关键词</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-black/20 rounded-2xl p-6 border border-white/5">
+                            <h3 class="text-lg mb-4 text-purple-200 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                五维能量分析
+                            </h3>
+                            <div class="radar-chart" id="radar-chart"></div>
+                            <div class="mt-4 grid grid-cols-5 gap-2 text-center" id="dimension-scores"></div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="bg-black/20 rounded-2xl p-5 border border-white/5">
+                                <h3 class="text-base mb-3 text-purple-200">能量分析</h3>
+                                <div id="result-analysis" class="reading-text text-gray-200 text-sm leading-relaxed space-y-3"></div>
+                            </div>
+
+                            <div class="bg-black/20 rounded-2xl p-5 border border-white/5">
+                                <h3 class="text-base mb-2 text-purple-200">珠宝搭配建议</h3>
+                                <p id="result-jewelry" class="text-sm leading-relaxed text-gray-300 font-light"></p>
+                            </div>
+
+                            <div class="bg-black/20 rounded-2xl p-5 border border-white/5 flex flex-col justify-center items-center text-center">
+                                <h3 class="text-base mb-2 text-purple-200">能量寄语</h3>
+                                <p id="result-affirmation" class="reading-text italic text-white">"我与宇宙和谐共振。"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <button onclick="resetQuiz()" class="text-xs uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-colors border-b border-transparent hover:border-white pb-1">
+                            重新开始探索
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const starContainer = document.getElementById('star-container');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 1;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+            star.style.animationDelay = `${Math.random() * 2}s`;
+            starContainer.appendChild(star);
+        }
+
+        const energies = {
+            protection: 0,
+            love: 0,
+            clarity: 0,
+            peace: 0,
+            energy: 0,
+            intuition: 0
+        };
+
+        const userPreferences = {
+            style: "",
+            metal: "",
+            blockage: ""
+        };
+
+        const dimensionLabels = {
+            protection: "守护力",
+            love: "情感力",
+            clarity: "清晰力",
+            peace: "平静力",
+            energy: "行动力",
+            intuition: "直觉力"
+        };
+
+        const dimensionColors = {
+            protection: "#8b5cf6",
+            love: "#ec4899", 
+            clarity: "#06b6d4",
+            peace: "#a78bfa",
+            energy: "#f59e0b",
+            intuition: "#3b82f6"
+        };
+
+        const questions = [
+            {
+                text: "此刻你内心最渴望获得哪种能量支持？",
+                options: [
+                    { text: "抵御外界干扰的守护屏障", traits: { protection: 2, peace: 1 } },
+                    { text: "与他人深度连接的情感纽带", traits: { love: 2, peace: 1 } },
+                    { text: "看透事物本质的洞察能力", traits: { clarity: 2, intuition: 1 } },
+                    { text: "推动前进的行动动力", traits: { energy: 2, clarity: 1 } }
+                ]
+            },
+            {
+                text: "你通常通过什么方式给自己充电？",
+                options: [
+                    { text: "在安静独处中静心休憩", traits: { peace: 2, intuition: 1 } },
+                    { text: "置身于大自然之中", traits: { energy: 1, protection: 1 } },
+                    { text: "与亲友相伴共度时光", traits: { love: 2 } },
+                    { text: "投入创造性活动", traits: { energy: 2, clarity: 1 } }
+                ]
+            },
+            {
+                text: "哪种自然元素最能触动你的内心？",
+                options: [
+                    { text: "闪烁跳动的火焰", traits: { energy: 2, protection: 1 } },
+                    { text: "深邃流动的水", traits: { intuition: 2, love: 1 } },
+                    { text: "稳固厚重的大地", traits: { protection: 2, peace: 1 } },
+                    { text: "轻柔净化的风", traits: { clarity: 2, intuition: 1 } }
+                ]
+            },
+            {
+                text: "最近哪种感受最让你困扰？",
+                options: [
+                    { text: "烦躁不安或焦虑", traits: { peace: 2, protection: 1 } },
+                    { text: "自我怀疑或思绪混乱", traits: { clarity: 2, intuition: 1 } },
+                    { text: "悲伤或情感封闭", traits: { love: 2, peace: 1 } },
+                    { text: "倦怠或身心疲惫", traits: { energy: 2, protection: 1 } }
+                ]
+            },
+            {
+                text: "如果你能进入一个理想的心灵空间，你会选择哪里？",
+                options: [
+                    { text: "月光照耀的静谧森林", traits: { intuition: 2, protection: 1 } },
+                    { text: "阳光明媚的温馨花园", traits: { energy: 2, love: 1 } },
+                    { text: "充满智慧的古老图书馆", traits: { clarity: 2, peace: 1 } },
+                    { text: "黄昏时分的宁静海滩", traits: { peace: 2, intuition: 1 } }
+                ]
+            },
+            {
+                text: "一天中你最享受哪个时刻？",
+                options: [
+                    { text: "黎明的第一缕阳光", traits: { clarity: 2, energy: 1 } },
+                    { text: "正午阳光最盛时", traits: { energy: 2, clarity: 1 } },
+                    { text: "日落时分的金色余晖", traits: { love: 2, peace: 1 } },
+                    { text: "深夜万籁俱寂时", traits: { intuition: 2, protection: 1 } }
+                ]
+            },
+            {
+                text: "你最想摆脱或放下的是什么？",
+                options: [
+                    { text: "对未知的恐惧与不安", traits: { protection: 2, intuition: 1 } },
+                    { text: "对过往伤痛的执念", traits: { love: 2, peace: 1 } },
+                    { text: "被他人情绪影响的状态", traits: { protection: 2, clarity: 1 } },
+                    { text: "拖延和停滞不前的感觉", traits: { energy: 2, clarity: 1 } }
+                ]
+            },
+            {
+                text: "面对人生重大变化，你会如何应对？",
+                options: [
+                    { text: "理性分析，寻找最优解", traits: { clarity: 2 } },
+                    { text: "用心感受，顺势而为", traits: { love: 1, intuition: 2 } },
+                    { text: "立即行动，快速推进", traits: { energy: 2 } },
+                    { text: "退后一步，静心思考", traits: { peace: 2, protection: 1 } }
+                ]
+            },
+            {
+                text: "如果你能获得一种宇宙能量的指引，你会选择？",
+                options: [
+                    { text: "太阳般温暖炽热的能量", traits: { energy: 2, clarity: 1 } },
+                    { text: "月亮般柔和直觉的能量", traits: { intuition: 2, peace: 1 } },
+                    { text: "星辰般深邃智慧的能量", traits: { clarity: 1, intuition: 2 } },
+                    { text: "大地般稳固可靠的能量", traits: { protection: 2, love: 1 } }
+                ]
+            },
+            {
+                text: "哪种形态最吸引你的审美？",
+                options: [
+                    { text: "原始天然、未经雕琢的", traits: { protection: 1, energy: 1 } },
+                    { text: "光滑圆润、柔和舒适的", traits: { peace: 1, love: 1 } },
+                    { text: "棱角分明、有力量感的", traits: { clarity: 2 } },
+                    { text: "几何对称、完美平衡的", traits: { clarity: 1, peace: 1 } }
+                ]
+            },
+            {
+                text: "选择一种让你感到舒适的色调：",
+                options: [
+                    { text: "深邃的靛蓝、紫罗兰与夜空蓝", traits: { intuition: 2, peace: 1 } },
+                    { text: "柔和的粉色、玫瑰色与淡绿色", traits: { love: 2, peace: 1 } },
+                    { text: "温暖的金色、琥珀色与火橙色", traits: { energy: 2, clarity: 1 } },
+                    { text: "深沉的黑、棕与烟灰色", traits: { protection: 2, clarity: 1 } }
+                ]
+            },
+            {
+                text: "你平时喜欢什么样的珠宝风格？",
+                options: [
+                    { text: "简约精致款", action: () => userPreferences.style = "极简主义" },
+                    { text: "大胆醒目的宣言款", action: () => userPreferences.style = "宣言款" },
+                    { text: "叠戴混搭的波西米亚风", action: () => userPreferences.style = "波西米亚风" },
+                    { text: "华丽精细的复古款", action: () => userPreferences.style = "复古风" }
+                ]
+            },
+            {
+                text: "哪种金属色调最衬你的肤色？",
+                options: [
+                    { text: "冷调银色或白金", action: () => userPreferences.metal = "银色/白金" },
+                    { text: "温暖经典的黄金", action: () => userPreferences.metal = "黄金" },
+                    { text: "浪漫温柔的玫瑰金", action: () => userPreferences.metal = "玫瑰金" },
+                    { text: "天然编织绳或皮革", action: () => userPreferences.metal = "天然编织" }
+                ]
+            },
+            {
+                text: "你感觉身体哪个部位最需要关注？",
+                options: [
+                    { text: "头部（思虑过多、容易头疼）", action: () => { userPreferences.blockage = "mind"; energies.clarity++; energies.peace++; } },
+                    { text: "胸口（情绪低落、容易悲伤）", action: () => { userPreferences.blockage = "heart"; energies.love += 2; } },
+                    { text: "喉咙（难以表达真实想法）", action: () => { userPreferences.blockage = "throat"; energies.clarity += 2; energies.intuition++; } },
+                    { text: "身体四肢（容易疲惫乏力）", action: () => { userPreferences.blockage = "body"; energies.protection++; energies.energy++; } }
+                ]
+            },
+            {
+                text: "你希望这件珠宝最终带给你什么感受？",
+                options: [
+                    { text: "坚实可靠的安全感", traits: { protection: 3 } },
+                    { text: "温暖被爱的幸福感", traits: { love: 3 } },
+                    { text: "清晰明确的洞察力", traits: { clarity: 2, intuition: 2 } },
+                    { text: "源源不断的喜悦活力", traits: { energy: 3 } }
+                ]
+            }
+        ];
+
+        const crystalResults = {
+            protection: {
+                name: "黑碧玺与黑曜石",
+                keywords: "稳固 • 守护 • 净化",
+                description: "根据你的测评结果，你的守护力得分最高，表明你目前需要建立稳定的内在屏障。你可能容易受到外界环境影响，黑碧玺和黑曜石被认为具有稳定和净化的特性，可以帮助你增强面对挑战时的稳定心态。",
+                affirmation: "我内心稳固，能够从容应对生活中的各种变化。"
+            },
+            love: {
+                name: "粉水晶与蔷薇石",
+                keywords: "关爱 • 疗愈 • 自我认同",
+                description: "根据你的测评结果，你的情感力得分最高，表明你正在寻求更多的情感连接与自我接纳。粉水晶常被认为与爱心能量相关，可以提醒你关注自我关爱与人际关系的培养。",
+                affirmation: "我学会爱自己，也愿意真诚地与他人建立连接。"
+            },
+            clarity: {
+                name: "白水晶与海蓝宝",
+                keywords: "专注 • 清晰 • 目标导向",
+                description: "根据你的测评结果，你的清晰力得分最高，表明你正在寻求思维的清晰与方向的明确。白水晶因其纯净透明的特性常被视为专注力的象征，海蓝宝的淡蓝色调则给人平静清晰的感觉。",
+                affirmation: "我的目标清晰，我有能力做出正确的选择。"
+            },
+            peace: {
+                name: "紫水晶与蓝纹玛瑙",
+                keywords: "平静 • 放松 • 内在平衡",
+                description: "根据你的测评结果，你的平静力得分最高，表明你正处于压力较大的状态，需要更多的放松与休息。紫水晶常被认为有助于放松心情，蓝纹玛瑙柔和的蓝色纹理则给人宁静的视觉感受。",
+                affirmation: "我允许自己放松，在平静中找回内在的平衡。"
+            },
+            energy: {
+                name: "黄水晶与红玛瑙",
+                keywords: "活力 • 积极 • 行动力",
+                description: "根据你的测评结果，你的行动力得分最高，表明你正在寻求更多的动力与积极性。黄水晶温暖的黄色调常与阳光、活力相关联，红玛瑙则给人坚定有力的感觉。",
+                affirmation: "我充满活力，积极行动，创造我想要的生活。"
+            },
+            intuition: {
+                name: "月光石与青金石",
+                keywords: "洞察 • 内省 • 智慧",
+                description: "根据你的测评结果，你的直觉力得分最高，表明你更倾向于通过内在思考来理解事物。月光石因其特殊的光学效应常被认为与洞察力相关，青金石深邃的蓝色则象征着智慧与深度。",
+                affirmation: "我相信自己的判断，在思考中找到属于我的答案。"
+            }
+        };
+
+        let currentQuestionIndex = 0;
+        let answerHistory = [];
+        let selectedOptionIndex = null;
+
+        const screens = {
+            welcome: document.getElementById('welcome-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            loading: document.getElementById('loading-screen'),
+            result: document.getElementById('result-screen')
+        };
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        function switchScreen(from, to) {
+            from.classList.remove('fade-enter-active');
+            from.classList.add('fade-exit-active');
+            
+            setTimeout(() => {
+                from.classList.add('hidden-section');
+                from.classList.remove('fade-exit-active');
+                
+                to.classList.remove('hidden-section');
+                to.classList.add('fade-enter');
+                
+                void to.offsetWidth;
+                
+                to.classList.add('fade-enter-active');
+                to.classList.remove('fade-enter');
+            }, 500);
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            answerHistory = [];
+            selectedOptionIndex = null;
+            for(let key in energies) energies[key] = 0;
+            userPreferences.style = "";
+            userPreferences.metal = "";
+            userPreferences.blockage = "";
+            
+            renderQuestion();
+            switchScreen(screens.welcome, screens.quiz);
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestionIndex];
+            
+            questionText.style.opacity = 0;
+            optionsContainer.style.opacity = 0;
+
+            setTimeout(() => {
+                questionText.innerText = q.text;
+                optionsContainer.innerHTML = '';
+
+                q.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-option w-full p-5 rounded-xl text-left font-light text-sm md:text-base text-gray-200 hover:text-white';
+                    btn.innerText = opt.text;
+                    btn.dataset.index = index;
+                    btn.onclick = () => selectOption(index);
+                    
+                    if (answerHistory[currentQuestionIndex] === index) {
+                        btn.classList.add('selected');
+                    }
+                    
+                    btn.style.opacity = '0';
+                    btn.style.transform = 'translateY(10px)';
+                    optionsContainer.appendChild(btn);
+                    
+                    setTimeout(() => {
+                        btn.style.transition = 'all 0.4s ease';
+                        btn.style.opacity = '1';
+                        btn.style.transform = 'translateY(0)';
+                    }, 100 * index);
+                });
+
+                const progressNum = currentQuestionIndex + 1;
+                progressText.innerText = `${progressNum} / ${questions.length}`;
+                progressBar.style.width = `${(progressNum / questions.length) * 100}%`;
+
+                questionText.style.transition = 'opacity 0.5s ease';
+                optionsContainer.style.transition = 'opacity 0.5s ease';
+                questionText.style.opacity = 1;
+                optionsContainer.style.opacity = 1;
+
+                updateNavigationButtons();
+            }, 300);
+        }
+
+        function selectOption(index) {
+            const buttons = optionsContainer.querySelectorAll('.btn-option');
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            
+            selectedOptionIndex = index;
+            answerHistory[currentQuestionIndex] = index;
+            updateNavigationButtons();
+        }
+
+        function updateNavigationButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            const hasAnswer = answerHistory[currentQuestionIndex] !== undefined;
+            nextBtn.disabled = !hasAnswer;
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.innerHTML = `
+                    查看结果
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                `;
+            } else {
+                nextBtn.innerHTML = `
+                    下一题
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                `;
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                selectedOptionIndex = answerHistory[currentQuestionIndex] !== undefined ? answerHistory[currentQuestionIndex] : null;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (answerHistory[currentQuestionIndex] === undefined) return;
+            
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                selectedOptionIndex = answerHistory[currentQuestionIndex] !== undefined ? answerHistory[currentQuestionIndex] : null;
+                renderQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function recalculateEnergies() {
+            for(let key in energies) energies[key] = 0;
+            userPreferences.style = "";
+            userPreferences.metal = "";
+            userPreferences.blockage = "";
+            
+            answerHistory.forEach((optionIndex, questionIndex) => {
+                if (optionIndex !== undefined) {
+                    const option = questions[questionIndex].options[optionIndex];
+                    if (option.traits) {
+                        for (let trait in option.traits) {
+                            energies[trait] += option.traits[trait];
+                        }
+                    }
+                    if (option.action) {
+                        option.action();
+                    }
+                }
+            });
+        }
+
+        function finishQuiz() {
+            recalculateEnergies();
+            switchScreen(screens.quiz, screens.loading);
+            
+            const loadingTexts = [
+                "正在分析你的答案...",
+                "正在计算五维能量模型...",
+                "正在匹配水晶类型...",
+                "正在生成你的专属报告..."
+            ];
+            
+            let textIndex = 0;
+            const textInterval = setInterval(() => {
+                textIndex = (textIndex + 1) % loadingTexts.length;
+                document.getElementById('loading-text').innerText = loadingTexts[textIndex];
+            }, 1200);
+
+            setTimeout(() => {
+                clearInterval(textInterval);
+                calculateResults();
+                switchScreen(screens.loading, screens.result);
+            }, 4500);
+        }
+
+        function calculateResults() {
+            let highestEnergy = Object.keys(energies).reduce((a, b) => energies[a] > energies[b] ? a : b);
+            const resultData = crystalResults[highestEnergy];
+
+            document.getElementById('result-crystal-name').innerText = resultData.name;
+            document.getElementById('result-keywords').innerText = resultData.keywords;
+            document.getElementById('result-affirmation').innerText = `"${resultData.affirmation}"`;
+
+            let analysisHTML = `<p>${resultData.description}</p>`;
+            
+            let blockageText = "";
+            if(userPreferences.blockage === "mind") blockageText = "你提到头部容易思虑过多，建议将水晶佩戴在靠近头部的位置（如耳环或短项链），可以时刻提醒自己保持清晰的思维状态。";
+            else if(userPreferences.blockage === "heart") blockageText = "你提到胸口区域情绪较重，建议将水晶佩戴在较长的链子上，让它恰好落在胸口位置，作为关注情感健康的温柔提醒。";
+            else if(userPreferences.blockage === "throat") blockageText = "你提到在表达方面有困难，建议佩戴一条恰好落在喉咙处的短项链或项圈，可以时刻提醒自己勇敢表达真实想法。";
+            else if(userPreferences.blockage === "body") blockageText = "你提到身体容易感到疲惫，建议将水晶作为戒指或手链佩戴，让它在日常活动中成为你关注自身状态的提醒。";
+
+            analysisHTML += `<p class="mt-3 text-sm opacity-90">${blockageText}</p>`;
+            document.getElementById('result-analysis').innerHTML = analysisHTML;
+
+            let jewelryDesc = `根据你的审美偏好，推荐一款<strong>${userPreferences.style}</strong>风格的设计，材质选用<strong>${userPreferences.metal}</strong>。 `;
+            
+            if(userPreferences.style === "极简主义") jewelryDesc += "建议选择简洁的宝石切工——比如精致的泪滴形或小巧的抛光圆珠。让水晶成为主角，而非繁复的设计。";
+            if(userPreferences.style === "宣言款") jewelryDesc += "不妨大胆选择大型、原始或醒目镶嵌的宝石。你需要一件能够占据视觉焦点、掌控全场的能量锚点。";
+            if(userPreferences.style === "波西米亚风") jewelryDesc += "可以考虑将这款水晶与其他互补的小水晶叠戴混搭。层层叠戴能让不同能量相互交融。";
+            if(userPreferences.style === "复古风") jewelryDesc += "建议寻找华丽精细的镂空镶嵌，将宝石如同古董珍宝般衬托。与过去的连接会为水晶注入深厚的力量。";
+
+            document.getElementById('result-jewelry').innerHTML = jewelryDesc;
+
+            renderRadarChart();
+        }
+
+        function renderRadarChart() {
+            const chartContainer = document.getElementById('radar-chart');
+            const dimensions = Object.keys(energies);
+            const values = Object.values(energies);
+            const maxValue = Math.max(...values) || 1;
+            const normalizedValues = values.map(v => (v / maxValue) * 100);
+            
+            const centerX = 140;
+            const centerY = 140;
+            const radius = 100;
+            const levels = 4;
+            
+            let svg = `<svg viewBox="0 0 280 280">`;
+            
+            for (let level = 1; level <= levels; level++) {
+                const levelRadius = (radius / levels) * level;
+                let points = [];
+                dimensions.forEach((_, i) => {
+                    const angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                    const x = centerX + levelRadius * Math.cos(angle);
+                    const y = centerY + levelRadius * Math.sin(angle);
+                    points.push(`${x},${y}`);
+                });
+                svg += `<polygon class="radar-grid" points="${points.join(' ')}"/>`;
+            }
+            
+            dimensions.forEach((_, i) => {
+                const angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                svg += `<line class="radar-axis" x1="${centerX}" y1="${centerY}" x2="${x}" y2="${y}"/>`;
+            });
+            
+            let dataPoints = [];
+            dimensions.forEach((_, i) => {
+                const angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                const valueRadius = (normalizedValues[i] / 100) * radius;
+                const x = centerX + valueRadius * Math.cos(angle);
+                const y = centerY + valueRadius * Math.sin(angle);
+                dataPoints.push(`${x},${y}`);
+            });
+            
+            svg += `<polygon class="radar-area" points="${dataPoints.join(' ')}"/>`;
+            
+            dimensions.forEach((dim, i) => {
+                const angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                const valueRadius = (normalizedValues[i] / 100) * radius;
+                const x = centerX + valueRadius * Math.cos(angle);
+                const y = centerY + valueRadius * Math.sin(angle);
+                const labelRadius = radius + 20;
+                const labelX = centerX + labelRadius * Math.cos(angle);
+                const labelY = centerY + labelRadius * Math.sin(angle);
+                
+                svg += `<circle class="radar-point" cx="${x}" cy="${y}" r="4"/>`;
+                svg += `<text class="radar-label" x="${labelX}" y="${labelY}">${dimensionLabels[dim]}</text>`;
+            });
+            
+            svg += `</svg>`;
+            chartContainer.innerHTML = svg;
+            
+            const scoresContainer = document.getElementById('dimension-scores');
+            scoresContainer.innerHTML = '';
+            dimensions.forEach(dim => {
+                const percentage = Math.round((energies[dim] / maxValue) * 100);
+                scoresContainer.innerHTML += `
+                    <div>
+                        <div class="dimension-score" style="color: ${dimensionColors[dim]}">${percentage}%</div>
+                        <div class="text-[10px] text-gray-400 mt-1">${dimensionLabels[dim]}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function resetQuiz() {
+            switchScreen(screens.result, screens.welcome);
+        }
+
+        screens.quiz.classList.add('hidden-section');
+        screens.loading.classList.add('hidden-section');
+        screens.result.classList.add('hidden-section');
+    </script>
+</body>
+</html>
