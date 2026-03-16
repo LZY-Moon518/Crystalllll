@@ -285,7 +285,24 @@
 
     <main class="flex-grow flex items-center justify-center p-4 relative z-10 w-full max-w-5xl mx-auto min-h-screen">
         
-        <section id="welcome-screen" class="text-center w-full transition-all duration-800">
+        <section id="password-screen" class="text-center w-full transition-all duration-800">
+            <div class="glass-card rounded-3xl p-10 md:p-16 w-full max-w-md shadow-2xl">
+                <p class="text-sm uppercase tracking-[0.3em] text-[var(--text-muted)] mb-4">欢迎访问</p>
+                <h1 class="text-4xl md:text-5xl font-semibold mb-10 tracking-wide drop-shadow-lg">水晶能量测评</h1>
+                
+                <div class="mb-8">
+                    <input type="password" id="password-input" placeholder="请输入访问密码" class="w-full bg-white/5 border border-white/10 rounded-full py-4 px-6 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300">
+                </div>
+                
+                <p id="password-error" class="text-red-400 mb-6 hidden">密码错误，请重新输入</p>
+                
+                <button onclick="checkPassword()" class="btn-primary text-white font-medium uppercase tracking-widest text-sm py-4 px-10 rounded-full">
+                    进入系统
+                </button>
+            </div>
+        </section>
+
+        <section id="welcome-screen" class="text-center w-full transition-all duration-800 hidden-section">
             <div class="glass-card rounded-3xl p-10 md:p-16 w-full shadow-2xl">
                 <p class="text-sm uppercase tracking-[0.3em] text-[var(--text-muted)] mb-4">发现你的专属水晶</p>
                 <h1 class="text-4xl md:text-6xl font-semibold mb-6 tracking-wide drop-shadow-lg">水晶能量测评</h1>
@@ -639,6 +656,7 @@
         let selectedOptionIndex = null;
 
         const screens = {
+            password: document.getElementById('password-screen'),
             welcome: document.getElementById('welcome-screen'),
             quiz: document.getElementById('quiz-screen'),
             loading: document.getElementById('loading-screen'),
@@ -934,6 +952,29 @@
             switchScreen(screens.result, screens.welcome);
         }
 
+        function checkPassword() {
+            const passwordInput = document.getElementById('password-input');
+            const errorElement = document.getElementById('password-error');
+            const password = passwordInput.value.trim();
+            
+            if (password === 'GDOUCrystal') {
+                errorElement.classList.add('hidden');
+                switchScreen(screens.password, screens.welcome);
+            } else {
+                errorElement.classList.remove('hidden');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        // 监听回车键
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        screens.welcome.classList.add('hidden-section');
         screens.quiz.classList.add('hidden-section');
         screens.loading.classList.add('hidden-section');
         screens.result.classList.add('hidden-section');
