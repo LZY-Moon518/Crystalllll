@@ -315,7 +315,6 @@
                 
                 <div class="mt-8 text-xs text-[var(--text-muted)]">
                     <p>输入专属兑换码以解锁完整功能</p>
-                    <p class="mt-2">兑换码: GDOUCrystal</p>
                 </div>
             </div>
         </section>
@@ -1006,7 +1005,7 @@
             
             if (password === 'GDOUCrystal') {
                 errorElement.classList.add('hidden');
-                switchScreen(screens.password, screens.welcome);
+                startQuiz();
             } else {
                 errorElement.classList.remove('hidden');
                 passwordInput.value = '';
